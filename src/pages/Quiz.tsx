@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useUserStore } from "../store";
 import io from "socket.io-client";
 import { Socket } from "socket.io-client";
-import { redirect } from "react-router";
+import { useNavigate } from "react-router";
 
 type SocketState = null | Socket;
 type Question = null | {
@@ -18,33 +18,43 @@ export default function Page() {
   const [socket, setSocket] = useState<SocketState>(null);
   const [message, setMessage] = useState("");
   const [selectedChoices, setSelectedChoices] = useState<number[] | null>(null);
+  const [importantMessage, setImportantMessage] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!userId) {
-      window.location.href = "/login";
+      navigate("/");
     } else {
       const newSocket = io("https://carp-backend.iiitk.in");
       setSocket(newSocket);
+      newSocket.onAny((event, ...args) => {
+        console.log(event, args);
+      });
       newSocket.on("mcq", (data) => {
         setQuestion(data);
         setMessage("");
         setSelectedChoices(null);
       });
-      newSocket.on("msg", (msg) => {
-        setMessage(msg);
-      });
       newSocket.on("waiting", () => {
+        setQuestion(null);
+        setSelectedChoices(null);
+      });
+      newSocket.on("msg", (data) => {
+        setQuestion(null);
+        setSelectedChoices(null);
         setMessage("");
+        setImportantMessage(data.message);
       });
       newSocket.on("forceLogout", () => {
+        console.log("Force logout");
         clearUserId();
-        redirect("/login");
+        navigate("/login");
       });
     }
   }, [userId]);
 
   const handleAnswer = (choiceNo: number) => {
-    console.log({ question, currentVote });
+    console.log("Answered", choiceNo, selectedChoices);
     if (question?.qid === currentVote) return;
     if (selectedChoices === null) {
       setSelectedChoices([choiceNo]);
@@ -70,7 +80,7 @@ export default function Page() {
     setLoading(true);
     socket.emit("response", {
       qid: question.qid,
-      choiceNo: selectedChoices,
+      choiceNo: selectedChoices.sort(),
       uuid: userId,
     });
     setLoading(false);
@@ -79,6 +89,7 @@ export default function Page() {
 
   return (
     <div className="mt-8 flex flex-col items-center justify-center bg-[#1c1c1c] text-[#f4f0e0] p-4">
+      {importantMessage && <p className="text-2xl mb-4">{importantMessage}</p>}
       {!message && !question && (
         <p className="text-lg opacity-80 mb-4">Waiting for host</p>
       )}
@@ -95,21 +106,17 @@ export default function Page() {
                 key={index}
                 onClick={() => handleAnswer(index + 1)}
                 disabled={currentVote === question.qid}
-                className={`w-full py-4 px-4 border-2 bg-white text-black border-black
-                  hover:bg-gray-100 active:translate-x-1 active:translate-y-1 font-bold
+                className={`w-full py-4 px-4 border-2 text-black border-black
+                  active:translate-x-1 active:translate-y-1 font-bold
                   drop-shadow-md focus:outline-none shadow-purple
                   focus:ring-0 transition duration-150
                   ease-in-out disabled:opacity-50 disabled:cursor-not-allowed
                   ${
                     selectedChoices?.includes(index + 1)
-                      ? "bg-green-500 hover:bg-green-500"
-                      : ""
-                  }
-                  ${
-                    selectedChoices?.includes(index + 1) &&
-                    currentVote === question.qid
-                      ? "bg-green-600"
-                      : ""
+                      ? currentVote === question.qid
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-green-500 hover:bg-green-600"
+                      : "bg-white hover:bg-gray-100"
                   }`}
               >
                 {choice}
