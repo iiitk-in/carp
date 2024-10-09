@@ -53,7 +53,7 @@ function App() {
   );
 }
 
-function LocationProvider({ children }) {
+function LocationProvider({ children }: { children: React.ReactNode }) {
   return <AnimatePresence>{children}</AnimatePresence>;
 }
 

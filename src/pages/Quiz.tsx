@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { useUserStore } from "../store";
 import io from "socket.io-client";
+import { Socket } from "socket.io-client";
 
 export default function Page() {
+  type SocketState = null | Socket;
+  type Question = null | {
+    qid: string;
+    question: string;
+    choices: string[];
+  };
+
   const userId = useUserStore((state) => state.userId);
   const [loading, setLoading] = useState(false);
-  const [question, setQuestion] = useState(null);
-  const [socket, setSocket] = useState(null);
+  const [question, setQuestion] = useState<Question>(null);
+  const [socket, setSocket] = useState<SocketState>(null);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -25,12 +33,10 @@ export default function Page() {
         setQuestion(null);
         setMessage(msg);
       });
-
-      return () => newSocket.close();
     }
   }, [userId]);
 
-  const handleAnswer = (choiceNo) => {
+  const handleAnswer = (choiceNo: number) => {
     if (!question || !socket) return;
 
     setLoading(true);

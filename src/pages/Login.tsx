@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useUserStore } from "../store";
 
 export default function Page() {
-  const userId = useUserStore((state) => state.userId);
   const setUserId = useUserStore((state) => state.setUserId);
 
   const [loading, setloading] = useState(false);
@@ -16,7 +15,9 @@ export default function Page() {
           type="text"
           placeholder="HappyHippo"
           onChange={(e) => setusername(e.target.value)}
-          className="bg-[#1c1c1c] text-[#f4f0e0] border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-[#c401c4] focus:border-transparent placeholder-gray-500 transition duration-200 ease-in-out"
+          className="bg-[#1c1c1c] text-[#f4f0e0] border border-gray-700 
+          rounded-none focus:outline-none focus:ring-2 focus:ring-[#c401c4] 
+          focus:border-transparent placeholder-gray-500 transition duration-200 ease-in-out"
         />
         <button
           className={`
@@ -28,8 +29,10 @@ export default function Page() {
         transition-all
         ${
           loading
-            ? "bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed translate-x-1 translate-y-1"
-            : "bg-white text-black border-black hover:bg-gray-100 active:translate-x-1 active:translate-y-1"
+            ? `bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed 
+            translate-x-1 translate-y-1`
+            : `bg-white text-black border-black hover:bg-gray-100 
+            active:translate-x-1 active:translate-y-1`
         }
       `}
           style={{
@@ -47,8 +50,8 @@ export default function Page() {
     </div>
   );
 }
-
+// eslint-disable-next-line
 function register(name: string) {
   // make a request to the server
-  return "123";
+  return "123" + name;
 }
