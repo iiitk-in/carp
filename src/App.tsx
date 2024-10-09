@@ -1,35 +1,130 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  BrowserRouter,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import Login from "./pages/Login";
+import Quiz from "./pages/Quiz";
+
+import { motion, AnimatePresence } from "framer-motion";
+
+import "./App.css";
+
+const routeVariants = {
+  initial: {
+    y: "100vh",
+  },
+  final: {
+    y: "0vh",
+    transition: {
+      type: "spring",
+      mass: 0.4,
+    },
+  },
+};
+
+const childVariants = {
+  initial: {
+    opacity: 0,
+    y: "50px",
+  },
+  final: {
+    opacity: 1,
+    y: "0px",
+    transition: {
+      duration: 0.5,
+      delay: 0.5,
+    },
+  },
+};
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="App">
+      <BrowserRouter>
+        <Header />
+        <LocationProvider>
+          <RoutesWithAnimation />
+        </LocationProvider>
+      </BrowserRouter>
+    </div>
+  );
 }
 
-export default App
+function LocationProvider({ children }) {
+  return <AnimatePresence>{children}</AnimatePresence>;
+}
+
+function RoutesWithAnimation() {
+  const location = useLocation();
+  console.log(location);
+
+  return (
+    <Routes location={location} key={location.key}>
+      <Route path="/" element={<Home />} />
+      <Route path="/quiz" element={<QuizRoute />} />
+      <Route path="/contact" element={<Contact />} />
+    </Routes>
+  );
+}
+
+function Header() {
+  return (
+    <div className="header">
+      <span>Header Component</span>
+      <ul>
+        <NavLink to="/">Home</NavLink>
+        <NavLink to="/about">About</NavLink>
+        <NavLink to="/contact">Contact</NavLink>
+      </ul>
+    </div>
+  );
+}
+
+function Home() {
+  return (
+    <motion.div
+      variants={routeVariants}
+      initial="initial"
+      animate="final"
+      className="home component"
+    >
+      <motion.h1 variants={childVariants} initial="initial" animate="final">
+        <Login />
+      </motion.h1>
+    </motion.div>
+  );
+}
+
+function QuizRoute() {
+  return (
+    <motion.div
+      variants={routeVariants}
+      initial="initial"
+      animate="final"
+      className="about component"
+    >
+      <motion.h1 variants={childVariants} initial="initial" animate="final">
+        <Quiz />
+      </motion.h1>
+    </motion.div>
+  );
+}
+
+function Contact() {
+  return (
+    <motion.div
+      variants={routeVariants}
+      initial="initial"
+      animate="final"
+      className="contact component"
+    >
+      <motion.h1 variants={childVariants} initial="initial" animate="final">
+        Contact Component
+      </motion.h1>
+    </motion.div>
+  );
+}
+export default App;
