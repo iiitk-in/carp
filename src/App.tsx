@@ -1,12 +1,7 @@
-import {
-  BrowserRouter,
-  NavLink,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Quiz from "./pages/Quiz";
+import HeaderSection from "./components/Header";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,7 +39,7 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Header />
+        <HeaderSection />
         <LocationProvider>
           <RoutesWithAnimation />
         </LocationProvider>
@@ -65,21 +60,7 @@ function RoutesWithAnimation() {
     <Routes location={location} key={location.key}>
       <Route path="/" element={<Home />} />
       <Route path="/quiz" element={<QuizRoute />} />
-      <Route path="/contact" element={<Contact />} />
     </Routes>
-  );
-}
-
-function Header() {
-  return (
-    <div className="header">
-      <span>Header Component</span>
-      <ul>
-        <NavLink to="/">Home</NavLink>
-        <NavLink to="/about">About</NavLink>
-        <NavLink to="/contact">Contact</NavLink>
-      </ul>
-    </div>
   );
 }
 
@@ -104,7 +85,7 @@ function QuizRoute() {
       variants={routeVariants}
       initial="initial"
       animate="final"
-      className="about component"
+      className="quiz component"
     >
       <motion.h1 variants={childVariants} initial="initial" animate="final">
         <Quiz />
@@ -113,18 +94,4 @@ function QuizRoute() {
   );
 }
 
-function Contact() {
-  return (
-    <motion.div
-      variants={routeVariants}
-      initial="initial"
-      animate="final"
-      className="contact component"
-    >
-      <motion.h1 variants={childVariants} initial="initial" animate="final">
-        Contact Component
-      </motion.h1>
-    </motion.div>
-  );
-}
 export default App;

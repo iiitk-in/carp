@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { useUserStore } from "../store";
+import { useNavigate } from "react-router-dom";
 
 export default function Page() {
   const setUserId = useUserStore((state) => state.setUserId);
 
+  const { clearCurrentVote } = useUserStore();
+
   const [loading, setloading] = useState(false);
   const [username, setusername] = useState("");
+  const navigate = useNavigate();
 
   return (
-    <div className="h-20 flex flex-col items-center justify-center">
+    <div className="mt-40 flex flex-col items-center justify-center ">
       <div className="flex flex-col items-center justify-center gap-2">
         <span className="font-bold"> Enter a cool username </span>
         <input
@@ -23,7 +27,7 @@ export default function Page() {
           className={`
         relative
         font-bold
-        py-2
+        py-4
         px-4
         border-2
         transition-all
@@ -38,9 +42,17 @@ export default function Page() {
           style={{
             boxShadow: loading ? "none" : "5px 5px 0 #c401c4",
           }}
-          onClick={() => {
+          onClick={async () => {
             setloading(true);
-            setUserId(register(username));
+            const id = await register(username);
+            if (!id) {
+              setloading(false);
+              return;
+            }
+            setUserId(id);
+            clearCurrentVote();
+            console.log("Registered");
+            navigate("/quiz");
           }}
           disabled={loading}
         >
@@ -50,8 +62,17 @@ export default function Page() {
     </div>
   );
 }
-// eslint-disable-next-line
-function register(name: string) {
-  // make a request to the server
-  return "123" + name;
+async function register(name: string) {
+  const res = await fetch("https://carp-backend.iiitk.in/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name }),
+  });
+  const data = await res.json();
+  if (data.error) {
+    throw new Error(data.error);
+  }
+  return data.uuid;
 }

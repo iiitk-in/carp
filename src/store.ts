@@ -5,6 +5,9 @@ interface UserState {
   userId: string;
   setUserId: (id: string) => void;
   clearUserId: () => void;
+  currentVote: string | null;
+  setCurrentVote: (vote: string | null) => void;
+  clearCurrentVote: () => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -13,6 +16,9 @@ export const useUserStore = create<UserState>()(
       userId: "",
       setUserId: (id: string) => set({ userId: id }),
       clearUserId: () => set({ userId: "" }),
+      currentVote: null,
+      setCurrentVote: (qid: string | null) => set({ currentVote: qid }),
+      clearCurrentVote: () => set({ currentVote: null }),
     }),
     {
       name: "user-storage",
