@@ -3,6 +3,7 @@ import { useUserStore } from "../store";
 import io from "socket.io-client";
 import { Socket } from "socket.io-client";
 import { useNavigate } from "react-router";
+import Announcement from "../components/Annoucement";
 
 type SocketState = null | Socket;
 type Question = null | {
@@ -33,6 +34,7 @@ export default function Page() {
       newSocket.on("mcq", (data) => {
         setQuestion(data);
         setMessage("");
+        setImportantMessage("");
         setSelectedChoices(null);
       });
       newSocket.on("waiting", () => {
@@ -89,7 +91,7 @@ export default function Page() {
 
   return (
     <div className="mt-8 flex flex-col items-center justify-center bg-[#1c1c1c] text-[#f4f0e0] p-4">
-      {importantMessage && <p className="text-2xl mb-4">{importantMessage}</p>}
+      {importantMessage && <Announcement message={importantMessage} />}
       {!message && !question && (
         <p className="text-lg opacity-80 mb-4">Waiting for host</p>
       )}
