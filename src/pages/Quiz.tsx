@@ -50,7 +50,7 @@ export default function Page() {
       newSocket.on("forceLogout", () => {
         console.log("Force logout");
         clearUserId();
-        navigate("/login");
+        navigate("/");
       });
     }
   }, [userId]);
