@@ -76,6 +76,12 @@ type AdminHint struct {
 	Text      string `json:"text"`
 }
 
+type AdminAnswerkey struct {
+	Auth       string `json:"auth"`
+	QuestionId string `json:"questionID"`
+	OptionIDs  []int  `json:"answerKey"`
+}
+
 func sockHandler(m melody.Melody, s *melody.Session, msg []byte) {
 
 	type WSMessage struct {
@@ -120,6 +126,13 @@ func sockHandler(m melody.Melody, s *melody.Session, msg []byte) {
 			return
 		}
 		handleHint(m, s, ah)
+	case "adminAnswerkey":
+		var aa AdminAnswerkey
+		if err := json.Unmarshal(wsMsg.Data.(json.RawMessage), &aa); err != nil {
+			log.Println("Error unmarshalling adminAnswerkey data:", err)
+			return
+		}
+		handleAnswerkey(m, s, aa)
 
 	default:
 		log.Println("Unknown message type:", wsMsg.Type)
@@ -243,4 +256,81 @@ func handleHint(m melody.Melody, s *melody.Session, ah AdminHint) {
 		return
 	}
 	m.Broadcast(jsonBroadcast)
+}
+
+type AnswerkeyBroadcast struct {
+	Type       string `json:"type"`
+	QuestionID string `json:"questionID"`
+	OptionIDs  []int  `json:"optionIDs"`
+}
+
+var LatestAnswerkeyBroadcast AnswerkeyBroadcast
+
+func handleAnswerkey(m melody.Melody, s *melody.Session, aa AdminAnswerkey) {
+	if aa.Auth != adminPass {
+		log.Println("Unauthorized adminAnswerkey attempt by" + s.Request.RemoteAddr)
+		return
+	}
+
+	LatestAnswerkeyBroadcast = AnswerkeyBroadcast{
+		Type:       "answerkey",
+		QuestionID: aa.QuestionId,
+		OptionIDs:  aa.OptionIDs,
+	}
+
+	jsonBroadcast, err := json.Marshal(LatestAnswerkeyBroadcast)
+	if err != nil {
+		log.Println("Error marshalling answerkey broadcast:", err)
+		return
+	}
+	m.Broadcast(jsonBroadcast)
+}
+
+func handleLeaderboard(c echo.Context) error {
+	type LeaderboardEntry struct {
+		UserID   string `json:"userID"`
+		Username string `json:"username"`
+		Time     int    `json:"time"`
+	}
+
+	// Lock the mutex before accessing Answers to ensure safe concurrent access
+	answersMutex.Lock()
+	defer answersMutex.Unlock()
+
+	//Create a slice of LeaderboardEntry with questionID = LatestAnswerkeyBroadcast.QuestionID and all correct answers
+	leaderboard := make([]LeaderboardEntry, 0)
+	for _, a := range Answers {
+		if a.QuestionID == LatestAnswerkeyBroadcast.QuestionID {
+			//directly skip if optionIDs length is not equal to answerKey length
+			if len(a.OptionIDs) != len(LatestAnswerkeyBroadcast.OptionIDs) {
+				continue
+			}
+			correct := true
+			for i, v := range a.OptionIDs {
+				if v != LatestAnswerkeyBroadcast.OptionIDs[i] {
+					correct = false
+					break
+				}
+			}
+
+			if correct {
+				leaderboard = append(leaderboard, LeaderboardEntry{
+					UserID: a.UserID,
+					Username: func() string {
+						usersMutex.Lock()
+						defer usersMutex.Unlock()
+						for _, u := range Users {
+							if u.UserID == a.UserID {
+								return u.Username
+							}
+						}
+						return ""
+					}(),
+					Time: a.TimeLapsed,
+				})
+			}
+		}
+	}
+
+	return c.JSON(200, leaderboard)
 }

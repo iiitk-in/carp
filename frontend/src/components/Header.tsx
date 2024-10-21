@@ -1,18 +1,7 @@
-import { useLocation } from 'preact-iso';
-
 export function Header() {
-	const { url } = useLocation();
-
-	return (
-		<header>
-			<nav>
-				<a href="/" class={url == '/' && 'active'}>
-					Home
-				</a>
-				<a href="/404" class={url == '/404' && 'active'}>
-					404
-				</a>
-			</nav>
-		</header>
-	);
+  return (
+    <header className="text-[#e7e7d8] bg-[#1e1e1e] py-4 drop-shadow-xl md:pl-16 sm:pl-8 flex justify-center sm:justify-start">
+      <h2 className="text-xl font-bold uppercase title">Carp.IIITK.IN</h2>
+    </header>
+  );
 }

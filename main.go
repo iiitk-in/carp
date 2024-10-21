@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/olahol/melody"
@@ -36,18 +38,29 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Static("/", "dist")
+	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Root:   "dist",
+		Index:  "index.html",
+		HTML5:  true,
+		Browse: false,
+		Skipper: func(c echo.Context) bool {
+			return strings.HasPrefix(c.Request().URL.Path, "/api/")
+		},
+	}))
 
-	e.GET("/ws", func(c echo.Context) error {
+	e.GET("/api/ws", func(c echo.Context) error {
 		m.HandleRequest(c.Response().Writer, c.Request())
 		return nil
 	})
 
-	e.POST("/register", handleRegister)
+	e.POST("/api/register", handleRegister)
+
+	e.POST("/api/leaderboard", handleLeaderboard)
 
 	m.HandleMessage(func(s *melody.Session, msg []byte) {
 		sockHandler(*m, s, msg)
 	})
 
 	e.Logger.Fatal(e.Start(":5000"))
+
 }
