@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"os"
 	"regexp"
 	"sync"
 	"time"
@@ -14,7 +15,14 @@ import (
 var Users []User
 var usersMutex sync.Mutex
 
-var adminPass = "password"
+// read password from args
+var adminPass = func() string {
+	if len(os.Args) > 1 {
+		return os.Args[1]
+	} else {
+		panic("No password provided")
+	}
+}()
 
 var r, _ = regexp.Compile("^[a-zA-Z0-9]{3,15}$")
 
@@ -50,6 +58,7 @@ func handleRegister(c echo.Context) error {
 		Username: req.Username,
 	}
 	Users = append(Users, user)
+	log.Println("User registered:", user)
 
 	return c.JSON(200, user)
 }
@@ -84,6 +93,11 @@ type AdminAnswerkey struct {
 
 func sockHandler(m melody.Melody, s *melody.Session, msg []byte) {
 
+	if string(msg) == "ping" {
+		s.Write([]byte("pong"))
+		return
+	}
+
 	type WSMessage struct {
 		Type string      `json:"type"`
 		Data interface{} `json:"data"`
@@ -98,22 +112,52 @@ func sockHandler(m melody.Melody, s *melody.Session, msg []byte) {
 	switch wsMsg.Type {
 	case "newQuestion":
 		var nqData NQDataStruct
-		if err := json.Unmarshal(wsMsg.Data.(json.RawMessage), &nqData); err != nil {
+		data, ok := wsMsg.Data.(map[string]interface{})
+		if !ok {
+			log.Println("Error: wsMsg.Data is not of type map[string]interface{}")
+			return
+		}
+		rawData, err := json.Marshal(data)
+		if err != nil {
+			log.Println("Error marshalling wsMsg.Data:", err)
+			return
+		}
+		if err := json.Unmarshal(rawData, &nqData); err != nil {
 			log.Println("Error unmarshalling newQuestion data:", err)
 			return
 		}
 		handleNewQuestion(m, s, nqData)
-
 	case "answer":
 		var answer AnswerMsg
-		if err := json.Unmarshal(wsMsg.Data.(json.RawMessage), &answer); err != nil {
+		data, ok := wsMsg.Data.(map[string]interface{})
+		if !ok {
+			log.Println("Error: wsMsg.Data is not of type map[string]interface{}")
+			return
+		}
+		rawData, err := json.Marshal(data)
+		if err != nil {
+			log.Println("Error marshalling wsMsg.Data:", err)
+			return
+		}
+		if err := json.Unmarshal(rawData, &answer); err != nil {
 			log.Println("Error unmarshalling answer data:", err)
 			return
 		}
 		handleAnswer(m, s, answer)
+
 	case "adminAnnouncement":
 		var aa AdminAnnouncement
-		if err := json.Unmarshal(wsMsg.Data.(json.RawMessage), &aa); err != nil {
+		data, ok := wsMsg.Data.(map[string]interface{})
+		if !ok {
+			log.Println("Error: wsMsg.Data is not of type map[string]interface{}")
+			return
+		}
+		rawData, err := json.Marshal(data)
+		if err != nil {
+			log.Println("Error marshalling wsMsg.Data:", err)
+			return
+		}
+		if err := json.Unmarshal(rawData, &aa); err != nil {
 			log.Println("Error unmarshalling adminAnnouncement data:", err)
 			return
 		}
@@ -121,14 +165,35 @@ func sockHandler(m melody.Melody, s *melody.Session, msg []byte) {
 
 	case "adminHint":
 		var ah AdminHint
-		if err := json.Unmarshal(wsMsg.Data.(json.RawMessage), &ah); err != nil {
+		data, ok := wsMsg.Data.(map[string]interface{})
+		if !ok {
+			log.Println("Error: wsMsg.Data is not of type map[string]interface{}")
+			return
+		}
+		rawData, err := json.Marshal(data)
+		if err != nil {
+			log.Println("Error marshalling wsMsg.Data:", err)
+			return
+		}
+		if err := json.Unmarshal(rawData, &ah); err != nil {
 			log.Println("Error unmarshalling adminHint data:", err)
 			return
 		}
 		handleHint(m, s, ah)
+
 	case "adminAnswerkey":
 		var aa AdminAnswerkey
-		if err := json.Unmarshal(wsMsg.Data.(json.RawMessage), &aa); err != nil {
+		data, ok := wsMsg.Data.(map[string]interface{})
+		if !ok {
+			log.Println("Error: wsMsg.Data is not of type map[string]interface{}")
+			return
+		}
+		rawData, err := json.Marshal(data)
+		if err != nil {
+			log.Println("Error marshalling wsMsg.Data:", err)
+			return
+		}
+		if err := json.Unmarshal(rawData, &aa); err != nil {
 			log.Println("Error unmarshalling adminAnswerkey data:", err)
 			return
 		}
@@ -140,16 +205,33 @@ func sockHandler(m melody.Melody, s *melody.Session, msg []byte) {
 }
 
 var lastQuesionTime = time.Now()
+var LatestAnnouncementBroadcast *AnnouncementBroadcast
+
+type NewQuestionBroadcast struct {
+	Type string   `json:"type"`
+	Data Question `json:"data"`
+}
+
+var LatestQuestionBroadcast *NewQuestionBroadcast
+
+type AnswerkeyBroadcast struct {
+	Type string        `json:"type"`
+	Data AnswerKeyData `json:"data"`
+}
+
+var LatestAnswerkeyBroadcast *AnswerkeyBroadcast
+
+type HintBroadcast struct {
+	Type string   `json:"type"`
+	Data HintData `json:"data"`
+}
+
+var LatestHintBroadcast *HintBroadcast
 
 func handleNewQuestion(m melody.Melody, s *melody.Session, nqData NQDataStruct) {
 	if nqData.Auth != adminPass {
 		log.Println("Unauthorized newQuestion attempt by" + s.Request.RemoteAddr)
 		return
-	}
-
-	type NewQuestionBroadcast struct {
-		Type string   `json:"type"`
-		Data Question `json:"data"`
 	}
 
 	broadcast := NewQuestionBroadcast{
@@ -162,6 +244,10 @@ func handleNewQuestion(m melody.Melody, s *melody.Session, nqData NQDataStruct) 
 		return
 	}
 	lastQuesionTime = time.Now()
+	LatestQuestionBroadcast = &broadcast
+	LatestAnswerkeyBroadcast = nil
+	LatestHintBroadcast = nil
+	LatestAnnouncementBroadcast = nil
 	m.Broadcast(jsonBroadcast)
 }
 
@@ -199,6 +285,7 @@ func handleAnswer(m melody.Melody, s *melody.Session, answer AnswerMsg) {
 	//add answer to Answers
 	Answers = append(Answers, Answer{
 		UserID:     answer.UserID,
+		QuestionID: answer.QuestionID,
 		TimeLapsed: timeLapsed,
 		OptionIDs:  answer.OptionIDs,
 	})
@@ -208,36 +295,43 @@ func handleAnswer(m melody.Melody, s *melody.Session, answer AnswerMsg) {
 
 }
 
+type AnnouncementBroadcast struct {
+	Type string `json:"type"`
+	Data struct {
+		Text string `json:"text"`
+	} `json:"data"`
+}
+
 func handleAnnouncement(m melody.Melody, s *melody.Session, aa AdminAnnouncement) {
 	if aa.Auth != adminPass {
 		log.Println("Unauthorized adminAnnouncement attempt by" + s.Request.RemoteAddr)
 		return
 	}
 
-	type AnnouncementBroadcast struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
-	}
-
 	broadcast := AnnouncementBroadcast{
 		Type: "announcement",
-		Text: aa.Text,
+		Data: struct {
+			Text string `json:"text"`
+		}{
+			Text: aa.Text,
+		},
 	}
 	jsonBroadcast, err := json.Marshal(broadcast)
 	if err != nil {
 		log.Println("Error marshalling announcement broadcast:", err)
 		return
 	}
+	LatestAnnouncementBroadcast = &broadcast
+	LatestQuestionBroadcast = nil
+	LatestAnswerkeyBroadcast = nil
+	LatestHintBroadcast = nil
 	m.Broadcast(jsonBroadcast)
 }
 
-type HintBroadcast struct {
-	Type       string `json:"type"`
+type HintData struct {
 	QuestionID string `json:"questionID"`
 	Text       string `json:"text"`
 }
-
-var LatestHintBroadcast HintBroadcast
 
 func handleHint(m melody.Melody, s *melody.Session, ah AdminHint) {
 	if ah.Auth != adminPass {
@@ -245,10 +339,12 @@ func handleHint(m melody.Melody, s *melody.Session, ah AdminHint) {
 		return
 	}
 
-	LatestHintBroadcast = HintBroadcast{
-		Type:       "hint",
-		QuestionID: ah.QustionID,
-		Text:       ah.Text,
+	LatestHintBroadcast = &HintBroadcast{
+		Type: "hint",
+		Data: HintData{
+			QuestionID: ah.QustionID,
+			Text:       ah.Text,
+		},
 	}
 	jsonBroadcast, err := json.Marshal(LatestHintBroadcast)
 	if err != nil {
@@ -258,13 +354,10 @@ func handleHint(m melody.Melody, s *melody.Session, ah AdminHint) {
 	m.Broadcast(jsonBroadcast)
 }
 
-type AnswerkeyBroadcast struct {
-	Type       string `json:"type"`
+type AnswerKeyData struct {
 	QuestionID string `json:"questionID"`
 	OptionIDs  []int  `json:"optionIDs"`
 }
-
-var LatestAnswerkeyBroadcast AnswerkeyBroadcast
 
 func handleAnswerkey(m melody.Melody, s *melody.Session, aa AdminAnswerkey) {
 	if aa.Auth != adminPass {
@@ -272,10 +365,12 @@ func handleAnswerkey(m melody.Melody, s *melody.Session, aa AdminAnswerkey) {
 		return
 	}
 
-	LatestAnswerkeyBroadcast = AnswerkeyBroadcast{
-		Type:       "answerkey",
-		QuestionID: aa.QuestionId,
-		OptionIDs:  aa.OptionIDs,
+	LatestAnswerkeyBroadcast = &AnswerkeyBroadcast{
+		Type: "answerkey",
+		Data: AnswerKeyData{
+			QuestionID: aa.QuestionId,
+			OptionIDs:  aa.OptionIDs,
+		},
 	}
 
 	jsonBroadcast, err := json.Marshal(LatestAnswerkeyBroadcast)
@@ -287,6 +382,18 @@ func handleAnswerkey(m melody.Melody, s *melody.Session, aa AdminAnswerkey) {
 }
 
 func handleLeaderboard(c echo.Context) error {
+	//check password json body
+	type Password struct {
+		Auth string `json:"auth"`
+	}
+	req := new(Password)
+	if err := c.Bind(req); err != nil {
+		return c.String(400, "Bad Request")
+	}
+	if req.Auth != adminPass {
+		return c.String(401, "Unauthorized")
+	}
+
 	type LeaderboardEntry struct {
 		UserID   string `json:"userID"`
 		Username string `json:"username"`
@@ -296,18 +403,30 @@ func handleLeaderboard(c echo.Context) error {
 	// Lock the mutex before accessing Answers to ensure safe concurrent access
 	answersMutex.Lock()
 	defer answersMutex.Unlock()
+	//if no answers return empty array
+	if len(Answers) == 0 {
+		log.Println("No answers")
+		return c.JSON(200, []LeaderboardEntry{})
+	}
+	// if no answerkey return empty array
+	if LatestAnswerkeyBroadcast == nil {
+		log.Println("No answerkey")
+		return c.JSON(200, []LeaderboardEntry{})
+	}
 
 	//Create a slice of LeaderboardEntry with questionID = LatestAnswerkeyBroadcast.QuestionID and all correct answers
 	leaderboard := make([]LeaderboardEntry, 0)
 	for _, a := range Answers {
-		if a.QuestionID == LatestAnswerkeyBroadcast.QuestionID {
+		log.Println(a)
+		if a.QuestionID == LatestAnswerkeyBroadcast.Data.QuestionID {
 			//directly skip if optionIDs length is not equal to answerKey length
-			if len(a.OptionIDs) != len(LatestAnswerkeyBroadcast.OptionIDs) {
+			if len(a.OptionIDs) != len(LatestAnswerkeyBroadcast.Data.OptionIDs) {
 				continue
 			}
 			correct := true
+			//compare unsorted arrays
 			for i, v := range a.OptionIDs {
-				if v != LatestAnswerkeyBroadcast.OptionIDs[i] {
+				if v != LatestAnswerkeyBroadcast.Data.OptionIDs[i] {
 					correct = false
 					break
 				}
@@ -333,4 +452,43 @@ func handleLeaderboard(c echo.Context) error {
 	}
 
 	return c.JSON(200, leaderboard)
+}
+
+// Send current state to new user
+func handleInit(c echo.Context) error {
+	type InitData struct {
+		LastAnnouncement *AnnouncementBroadcast `json:"lastAnnouncement"`
+		LastQuestion     *Question              `json:"lastQuestion"`
+		LastHint         *HintBroadcast         `json:"lastHint"`
+		LastAnswerkey    *AnswerkeyBroadcast    `json:"lastAnswerkey"`
+	}
+
+	initData := InitData{
+		LastAnnouncement: func() *AnnouncementBroadcast {
+			if LatestAnnouncementBroadcast != nil {
+				return LatestAnnouncementBroadcast
+			}
+			return nil
+		}(),
+		LastQuestion: func() *Question {
+			if LatestQuestionBroadcast != nil {
+				return &LatestQuestionBroadcast.Data
+			}
+			return nil
+		}(),
+		LastHint: func() *HintBroadcast {
+			if LatestHintBroadcast != nil {
+				return LatestHintBroadcast
+			}
+			return nil
+		}(),
+		LastAnswerkey: func() *AnswerkeyBroadcast {
+			if LatestAnswerkeyBroadcast != nil {
+				return LatestAnswerkeyBroadcast
+			}
+			return nil
+		}(),
+	}
+
+	return c.JSON(200, initData)
 }

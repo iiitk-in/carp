@@ -6,6 +6,8 @@ import Home from "./pages/Home/index.jsx";
 import Quiz from "./pages/Quiz/index.jsx";
 import { NotFound } from "./pages/_404.jsx";
 import "./style.css";
+import AdminPage from "./pages/Admin/index.js";
+import Leaderboard from "./pages/Leaderboard/index.js";
 
 export function App() {
   return (
@@ -15,6 +17,8 @@ export function App() {
         <Router>
           <Route path="/" component={Home} />
           <Route path="/quiz" component={Quiz} />
+          <Route path="/admin" component={AdminPage} />
+          <Route path="/leaderboard" component={Leaderboard} />
           <Route default component={NotFound} />
         </Router>
       </main>

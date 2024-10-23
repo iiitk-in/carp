@@ -53,6 +53,14 @@ func main() {
 		return nil
 	})
 
+	ssessionID := generateID()
+
+	e.GET("/api/session", func(c echo.Context) error {
+		return c.JSON(200, map[string]string{"sessionID": ssessionID})
+	})
+
+	e.GET("/api/init", handleInit)
+
 	e.POST("/api/register", handleRegister)
 
 	e.POST("/api/leaderboard", handleLeaderboard)

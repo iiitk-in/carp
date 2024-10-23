@@ -1,23 +1,29 @@
+import { signal } from "@preact/signals";
+import createLocalStore from "../../store";
 import "./style.css";
 
-import { useState, useEffect } from "preact/hooks";
-import { signal, effect } from "@preact/signals";
+import { useEffect, useState } from "preact/hooks";
 
-// Helper function to get the initial state from localStorage
-const getInitialValue = (key, defaultValue) => {
-  const storedValue = localStorage.getItem(key);
-  return storedValue !== null ? JSON.parse(storedValue) : defaultValue;
-};
+const sessionUserID = createLocalStore<{ session: string; userID: string }>(
+  "sessionUserName",
+  { session: null, userID: null }
+);
 
-// Create a signal for the username
-const username = signal(getInitialValue("username", ""));
-
-// Sync the username with localStorage
-effect(() => {
-  localStorage.setItem("username", JSON.stringify(username.value));
-});
+const username = createLocalStore<string>("username", "");
+const sid = signal<string>(null);
 
 const CarpLoginPage = () => {
+  useEffect(() => {
+    fetch("/api/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.sessionID === sessionUserID.value?.session) {
+          window.location.href = "/quiz";
+        }
+        sid.value = data.sessionID;
+      });
+  }, []);
+
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -39,7 +45,7 @@ const CarpLoginPage = () => {
       }
 
       const data = await response.json();
-      localStorage.setItem("userID", data.userID);
+      sessionUserID.set({ session: sid.value, userID: data.userID });
       window.location.href = "/quiz";
 
       // Handle successful registration (e.g., redirect to dashboard)
@@ -62,7 +68,7 @@ const CarpLoginPage = () => {
                 id="username"
                 placeholder={"Hacker123"}
                 value={username.value}
-                onInput={(e) => (username.value = e.currentTarget.value)}
+                onInput={(e) => username.set(e.currentTarget.value)}
                 className="shadow appearance-none border w-full py-2 px-3 bg-[#1e1e1e] text-[#e7e7d8] leading-tight focus:outline-none focus:shadow-outline  focus:border-[#ff9999] border-[#555555] transition duration-300 placeholder:text-[#424242]"
                 required
               />
