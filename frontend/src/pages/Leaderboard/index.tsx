@@ -1,5 +1,3 @@
-import "./style.css";
-
 import { useEffect, useState } from "preact/hooks";
 import createLocalStore from "../../store";
 import MCQ, { MCQprops } from "../../components/MCQ";

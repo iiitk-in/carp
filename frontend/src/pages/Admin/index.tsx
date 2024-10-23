@@ -1,4 +1,3 @@
-import "./style.css";
 import websocketAPI from "../../ws";
 
 import { useEffect } from "preact/hooks";
