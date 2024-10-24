@@ -36,6 +36,11 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:5173", "https://carp.iiitk.in", "https://iiitk-carp.pages.dev"},
+		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
+	}))
+
 	e.GET("/", func(c echo.Context) error {
 		return c.HTML(200, "<p>You're not supposed to be here</p><script>console.log(\"Hi there :) We're looking for curious people like you join the Cyber Security Club at IIITK https://discord.gg/pVShHhrfX4 \")</script>")
 	})

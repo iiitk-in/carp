@@ -96,7 +96,7 @@ const MCQ = ({
         onClick={() => onLock(ansStore.value.ans)}
         disabled={locked || !ansStore.value?.ans?.length}
       >
-        Lock in
+        {locked ? "Locked in" : "Lock in"}
       </button>
     </div>
   );
@@ -105,7 +105,7 @@ const MCQ = ({
 function HintModal({ hint, onClose }) {
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center w-full"
+      className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center w-full z-50"
       onClick={onClose}
     >
       <div

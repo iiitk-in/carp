@@ -98,9 +98,14 @@ function LeaderboardEntry(props: { username: string; time: number }) {
     <div class="flex flex-row bg-[#2a2a2a] p-2 m-1 shadow-md w-[80vh]">
       <p>{props.username}</p>
       <div class="flex-grow"></div>
-      <p>{props.time}ms</p>
+      <p>{formatMstoSec(props.time)}</p>
     </div>
   );
+}
+
+function formatMstoSec(ms: number) {
+  // show upto 1 decimal place 1.1s
+  return (ms / 1000).toFixed(1) + "s";
 }
 
 export default Leaderboard;
