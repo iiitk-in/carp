@@ -51,7 +51,7 @@ export const QuizPage = () => {
       .then((res) => res.json())
       .then((state) => {
         if (state.lastAnnouncement) {
-          announcementState.value = state.lastAnnouncement.text;
+          announcementState.value = state.lastAnnouncement.data.text;
           MCQState.value = null;
           return;
         }
