@@ -38,7 +38,7 @@ const sendAnswer = (
 export const QuizPage = () => {
   useEffect(() => {
     //check if session matches server, if not logout
-    fetch("/api/session")
+    fetch(import.meta.env.VITE_BACKEND_URL + "/api/session")
       .then((res) => res.json())
       .then((data) => {
         if (data.sessionID !== sessionUserID.value?.session) {
@@ -47,7 +47,7 @@ export const QuizPage = () => {
       });
 
     //first hydrate from /api/init
-    fetch("/api/init")
+    fetch(import.meta.env.VITE_BACKEND_URL + "/api/init")
       .then((res) => res.json())
       .then((state) => {
         if (state.lastAnnouncement) {

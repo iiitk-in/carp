@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/olahol/melody"
@@ -38,15 +36,9 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		Root:   "dist",
-		Index:  "index.html",
-		HTML5:  true,
-		Browse: false,
-		Skipper: func(c echo.Context) bool {
-			return strings.HasPrefix(c.Request().URL.Path, "/api/")
-		},
-	}))
+	e.GET("/", func(c echo.Context) error {
+		return c.HTML(200, "<p>You're not supposed to be here</p><script>console.log(\"Hi there :) We're looking for curious people like you join the Cyber Security Club at IIITK https://discord.gg/pVShHhrfX4 \")</script>")
+	})
 
 	e.GET("/api/ws", func(c echo.Context) error {
 		m.HandleRequest(c.Response().Writer, c.Request())

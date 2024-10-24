@@ -12,7 +12,7 @@ export const Leaderboard = () => {
   useEffect(() => {
     console.log(question);
     //fetch /api/init to show the question
-    fetch("/api/init")
+    fetch(import.meta.env.VITE_BACKEND_URL + "/api/init")
       .then((res) => res.json())
       .then((state) => {
         if (state.lastQuestion) {
@@ -31,7 +31,7 @@ export const Leaderboard = () => {
       });
     if (password.value !== "") {
       //fetch leaderboard
-      fetch("/api/leaderboard", {
+      fetch(import.meta.env.VITE_BACKEND_URL + "/api/leaderboard", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -57,7 +57,7 @@ export const Leaderboard = () => {
         <button
           className="bg-[#2a2a2a] p-8 pt-6 shadow-md w-fit max-w-md flex flex-col"
           onClick={() => {
-            fetch("/api/leaderboard", {
+            fetch(import.meta.env.VITE_BACKEND_URL + "/api/leaderboard", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

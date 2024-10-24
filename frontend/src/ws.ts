@@ -154,5 +154,5 @@ class WebSocketAPI {
 
 export { WebSocketAPI, ConnectionState };
 
-const ws = new WebSocketAPI("/api/ws");
+const ws = new WebSocketAPI(import.meta.env.VITE_BACKEND_URL + "/api/ws");
 export default ws;

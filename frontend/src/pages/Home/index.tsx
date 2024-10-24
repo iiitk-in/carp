@@ -14,7 +14,7 @@ const sid = signal<string>(null);
 
 const CarpLoginPage = () => {
   useEffect(() => {
-    fetch("/api/session")
+    fetch(import.meta.env.VITE_BACKEND_URL + "/api/session")
       .then((res) => res.json())
       .then((data) => {
         if (data.sessionID === sessionUserID.value?.session) {
@@ -31,13 +31,16 @@ const CarpLoginPage = () => {
     setError("");
 
     try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username: username.value }),
-      });
+      const response = await fetch(
+        import.meta.env.VITE_BACKEND_URL + "/api/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username: username.value }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.text();
