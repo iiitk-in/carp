@@ -25,14 +25,15 @@ const Option = ({
 
   return (
     <div
-      className={`${
-        selected
-          ? `bg-[#ff9999] text-[#4a2b2b] shadow-md shadow-[#ffd0d0] ${
-              locked ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
-            }`
-          : `bg-[#e7e7d8] text-[#2a2a2a] shadow-md shadow-[#ff9999] hover:shadow-lg"
+      className={`text-pretty max-h-36 break-words
+        ${
+          selected
+            ? `bg-[#ff9999] text-[#4a2b2b] shadow-md shadow-[#ffd0d0] ${
+                locked ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+              }`
+            : `bg-[#e7e7d8] text-[#2a2a2a] shadow-md shadow-[#ff9999] hover:shadow-lg"
           ${locked ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`
-      } p-3 m-2 cursor-pointer transition-all duration-200 options-font text-lg`}
+        } p-3 m-2 cursor-pointer transition-all duration-200 options-font text-lg`}
       onClick={handleClick}
     >
       {option}

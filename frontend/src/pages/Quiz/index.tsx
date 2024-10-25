@@ -189,7 +189,11 @@ export const QuizPage = () => {
       {MCQState.value?.questionID ? (
         <MCQ {...MCQState.value} />
       ) : announcementState.value ? (
-        <div className={"bg-[#2a2a2a] p-4 shadow-md w-full max-w-md"}>
+        <div
+          className={
+            "bg-[#2a2a2a] p-4 shadow-md w-full max-w-md break-words wrap-pretty"
+          }
+        >
           <h2 className="text-3xl font-bold mb-1 text-center teko-semibold">
             Announcement
           </h2>
@@ -214,7 +218,7 @@ function AnnouncementFormatted(props: { text: string }) {
           href={word}
           target="_blank"
           rel="noreferrer"
-          className="underline text-[#ff9999] hover:text-[#ff6666]"
+          className="underline text-[#ff9999] hover:text-[#ff6666] break-words"
         >
           {word}
         </a>

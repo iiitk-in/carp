@@ -57,7 +57,7 @@ const MCQ = ({
   };
 
   return (
-    <div className="bg-[#2a2a2a] p-8 pt-6 shadow-md w-full max-w-md flex flex-col">
+    <div className="bg-[#2a2a2a] p-8 pt-6 shadow-md w-full max-w-lg flex flex-col">
       <h2 className="text-3xl font-bold mb-1 text-center teko-regular">
         {question}
       </h2>

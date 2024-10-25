@@ -32,6 +32,7 @@ type Question struct {
 func main() {
 	e := echo.New()
 	m := melody.New()
+	m.Config.MaxMessageSize = 1024 * 1024
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
